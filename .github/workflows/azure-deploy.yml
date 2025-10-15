@@ -2,8 +2,9 @@ name: Deploy to Azure Web App
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 env:
