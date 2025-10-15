@@ -1,0 +1,91 @@
+name: Deploy to Azure Web App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: nipmo-website    # set this to your application's name
+  AZURE_WEBAPP_PACKAGE_PATH: './nipmo-clone'      # path to your web app project
+  NODE_VERSION: '18.x'                # set this to the node version to use
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Create working directory
+      run: |
+        mkdir -p NIPMO-Website
+        cd NIPMO-Website
+        pwd
+
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        path: nipmo-clone
+
+    - name: Debug directory structure
+      run: |
+        echo "Current location:"
+        pwd
+        echo "Directory structure:"
+        ls -la
+        echo "nipmo-clone contents:"
+        ls -la nipmo-clone/
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_720F8F266495476A98F659F7249D1999 }}
+        tenant-id: ${{  secrets.AZUREAPPSERVICE_TENANTID_FD8B8811D50647BDAB068F74E2E86B09 }}
+        subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1DBF40DDB4AF4F39B337BDA4B1B2CEB3 }}
+
+    - name: npm install and build
+      run: |
+        cd nipmo-clone
+        echo "Verifying package.json exists:"
+        test -f package.json || { echo "Error: package.json not found"; exit 1; }
+        echo "Installing dependencies..."
+        npm ci --legacy-peer-deps
+        echo "Building application..."
+        npm run build
+      env:
+        CI: true
+
+    - name: Prepare for deployment
+      run: |
+        echo "Current directory structure:"
+        pwd
+        ls -la
+        cd nipmo-clone
+        echo "Preparing deployment package..."
+        echo "Build output:"
+        ls -la .next/
+        echo "Moving to parent directory for deployment"
+        cd ..
+        mkdir -p deploy
+        cp -r nipmo-clone/.next nipmo-clone/package.json nipmo-clone/package-lock.json deploy/
+        
+    - name: 'Deploy to Azure WebApp'
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: deploy
+        slot-name: 'production'  # or your staging slot name
+        startup-command: 'npm start'  # Next.js production startup command
