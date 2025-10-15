@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: nipmo-website    # set this to your application's name
-  AZURE_WEBAPP_PACKAGE_PATH: './nipmo-clone'      # path to your web app project
+  AZURE_WEBAPP_NAME: nipmo-web    # set this to your application's name
+  AZURE_WEBAPP_PACKAGE_PATH: './deploy'      # path to your web app project
   NODE_VERSION: '18.x'                # set this to the node version to use
 
 permissions:
@@ -22,25 +22,8 @@ jobs:
     environment: production
     
     steps:
-    - name: Create working directory
-      run: |
-        mkdir -p NIPMO-Website
-        cd NIPMO-Website
-        pwd
-
     - name: Checkout repository
       uses: actions/checkout@v3
-      with:
-        path: nipmo-clone
-
-    - name: Debug directory structure
-      run: |
-        echo "Current location:"
-        pwd
-        echo "Directory structure:"
-        ls -la
-        echo "nipmo-clone contents:"
-        ls -la nipmo-clone/
 
     - name: Set up Node.js
       uses: actions/setup-node@v3
@@ -57,7 +40,6 @@ jobs:
 
     - name: npm install and build
       run: |
-        cd nipmo-clone
         echo "Verifying package.json exists:"
         test -f package.json || { echo "Error: package.json not found"; exit 1; }
         echo "Installing dependencies..."
@@ -69,17 +51,11 @@ jobs:
 
     - name: Prepare for deployment
       run: |
-        echo "Current directory structure:"
-        pwd
-        ls -la
-        cd nipmo-clone
         echo "Preparing deployment package..."
-        echo "Build output:"
-        ls -la .next/
-        echo "Moving to parent directory for deployment"
-        cd ..
         mkdir -p deploy
-        cp -r nipmo-clone/.next nipmo-clone/package.json nipmo-clone/package-lock.json deploy/
+        cp -r .next package.json package-lock.json public next.config.js deploy/
+        # Create a production-ready package.json
+        node -e 'const pkg=JSON.parse(require("fs").readFileSync("deploy/package.json")); pkg.scripts={"start":"next start"}; require("fs").writeFileSync("deploy/package.json", JSON.stringify(pkg, null, 2));'
         
     - name: 'Deploy to Azure WebApp'
       uses: azure/webapps-deploy@v2
