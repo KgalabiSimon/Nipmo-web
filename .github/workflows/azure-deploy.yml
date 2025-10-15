@@ -7,8 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: nipmo-web    # set this to your application's name
-  AZURE_WEBAPP_PACKAGE_PATH: './deploy'      # path to your web app project
+  AZURE_WEBAPP_NAME: nipmo-wesbites    # correct name from publish profile
   NODE_VERSION: '18.x'                # set this to the node version to use
 
 permissions:
@@ -30,13 +29,12 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
+        cache-dependency-path: './package-lock.json'
 
     - name: Azure Login
       uses: azure/login@v1
       with:
-        client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_720F8F266495476A98F659F7249D1999 }}
-        tenant-id: ${{  secrets.AZUREAPPSERVICE_TENANTID_FD8B8811D50647BDAB068F74E2E86B09 }}
-        subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1DBF40DDB4AF4F39B337BDA4B1B2CEB3 }}
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
     - name: npm install and build
       run: |
@@ -52,16 +50,13 @@ jobs:
     - name: Prepare for deployment
       run: |
         echo "Preparing deployment package..."
-        mkdir -p deploy
-        cp -r .next package.json package-lock.json public next.config.js deploy/
         # Create a production-ready package.json
-        node -e 'const pkg=JSON.parse(require("fs").readFileSync("deploy/package.json")); pkg.scripts={"start":"next start"}; require("fs").writeFileSync("deploy/package.json", JSON.stringify(pkg, null, 2));'
+        node -e 'const pkg=JSON.parse(require("fs").readFileSync("package.json")); const newPkg={...pkg, scripts:{"start":"next start"}}; require("fs").writeFileSync("package.json", JSON.stringify(newPkg, null, 2));'
         
     - name: 'Deploy to Azure WebApp'
       uses: azure/webapps-deploy@v2
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-        package: deploy
-        slot-name: 'production'  # or your staging slot name
+        package: .
         startup-command: 'npm start'  # Next.js production startup command
