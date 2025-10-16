@@ -2,12 +2,7 @@
 const path = require('path');
 
 const nextConfig = {
-  experimental: {
-    turbopack: {
-      root: path.resolve(__dirname),
-      rootPath: path.resolve(__dirname)
-    }
-  },
+  output: 'standalone',
   allowedDevOrigins: ["*.preview.same-app.com"],
   images: {
     unoptimized: true,
