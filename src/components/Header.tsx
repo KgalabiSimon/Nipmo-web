@@ -11,6 +11,7 @@ export default function Header() {
   const [isMobile, setIsMobile] = useState(false)
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const kimsDropdownRef = useRef<HTMLDivElement>(null)
   const subMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -58,7 +59,11 @@ export default function Header() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       // Only close on click outside for desktop
-      if (!isMobile && dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (!isMobile && 
+          dropdownRef.current && 
+          !dropdownRef.current.contains(event.target as Node) &&
+          kimsDropdownRef.current &&
+          !kimsDropdownRef.current.contains(event.target as Node)) {
         closeDropdowns()
       }
     }
@@ -262,8 +267,35 @@ export default function Header() {
                 )}
               </div>
 
-              {/* KIMS Link */}
-              <Link href="/about-kims" className="text-gray-600 hover:text-gray-900 text-sm xl:text-base font-medium transition-colors">KIMS</Link>
+              {/* KIMS Dropdown */}
+              <div className="relative group" ref={kimsDropdownRef}>
+                <button
+                  className="text-gray-600 hover:text-gray-900 flex items-center text-sm xl:text-base font-medium transition-colors"
+                  onClick={() => toggleDropdown('kims')}
+                >
+                  KIMS
+                  <svg className="ml-1 h-3 w-3 xl:h-4 xl:w-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+
+                {/* KIMS Dropdown Menu */}
+                {activeDropdown === 'kims' && (
+                  <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                    <div className="py-2">
+                      <Link href="/about-kims" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => closeDropdowns()}>
+                        About KIMS
+                      </Link>
+                      <a href="https://www.nipmo.org/e-learn" target="_blank" rel="noopener noreferrer" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => closeDropdowns()}>
+                        NIPMO/KIMS E-Learn
+                      </a>
+                      <a href="https://www.nipmo.org/book-online" target="_blank" rel="noopener noreferrer" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => closeDropdowns()}>
+                        Sessions
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* News & Insights Link */}
               <Link href="/news-insights" className="text-gray-600 hover:text-gray-900 text-sm xl:text-base font-medium transition-colors">News & Insights</Link>
@@ -389,8 +421,30 @@ export default function Header() {
                   )}
                 </div>
 
-                {/* KIMS Link Mobile */}
-                <Link href="/about-kims" className="block py-2 text-gray-600 hover:text-gray-900" onClick={() => setIsMobileMenuOpen(false)}>KIMS</Link>
+                {/* KIMS Dropdown Mobile */}
+                <div>
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-between py-2 text-gray-600 hover:text-gray-900 font-medium"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggleMobileDropdown('kims')
+                    }}
+                  >
+                    KIMS
+                    <svg className={`h-4 w-4 transition-transform ${activeDropdown === 'kims' ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+
+                  {activeDropdown === 'kims' && (
+                    <div className="pl-4 space-y-2 mt-2">
+                      <Link href="/about-kims" className="block py-2 text-sm text-gray-600 hover:text-gray-900" onClick={() => setIsMobileMenuOpen(false)}>About KIMS</Link>
+                      <a href="https://www.nipmo.org/e-learn" target="_blank" rel="noopener noreferrer" className="block py-2 text-sm text-gray-600 hover:text-gray-900">NIPMO/KIMS E-Learn</a>
+                      <a href="https://www.nipmo.org/book-online" target="_blank" rel="noopener noreferrer" className="block py-2 text-sm text-gray-600 hover:text-gray-900">Sessions</a>
+                    </div>
+                  )}
+                </div>
 
                 {/* News & Insights Link Mobile */}
                 <Link href="/news-insights" className="block py-2 text-gray-600 hover:text-gray-900" onClick={() => setIsMobileMenuOpen(false)}>News & Insights</Link>
